@@ -1,0 +1,39 @@
+{
+  "uro": {
+    "uretero": 9,
+    "rtu": 1,
+    "vasect": 14,
+    "postect": 27,
+    "hidro": 5,
+    "prost": 1
+  },
+  "cg": {
+    "colec": 19,
+    "hemorr": 4,
+    "ing": 21,
+    "incis": 3,
+    "umb": 10
+  },
+  "gin": {
+    "histt": 21,
+    "laq": 7,
+    "colpo": 11,
+    "hists": 3
+  },
+  "orto": {
+    "lca": 14,
+    "menisco": 30,
+    "cisto": 4,
+    "dedo": 2,
+    "tunel": 30
+  },
+  "orl": {
+    "adeno": 25,
+    "amig": 26,
+    "turb": 8,
+    "septo": 7
+  },
+  "vasc": {
+    "varizes": 40
+  }
+}
