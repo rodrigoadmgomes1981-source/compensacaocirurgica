@@ -4,8 +4,11 @@ Sistema para lançar o realizado mensal de cirurgias por especialidade e calcula
 
 ## Como usar
 1. Ao abrir, escolha na janela o **mês que deseja avaliar** (use ‹ › para mudar o ano). Um mês sem lançamento abre com o quadro atual de cirurgias e metas e com o **realizado em branco**.
-2. Em **Lançamento do realizado**, preencha a quantidade feita de cada cirurgia.
-3. Em **Extras e descontos**, veja o fechamento geral, o passo a passo das compensações por especialidade e o repasse final. Dá para baixar a planilha (CSV) e fechar o mês (trava os números).
+2. Em **Lançamento do realizado**, preencha a quantidade feita de cada cirurgia. O que é digitado fica como rascunho até ser salvo:
+   - **Salvar <especialidade>** (no rodapé de cada cartão) grava só aquela especialidade;
+   - **Salvar todo o lançamento** (barra fixa no fim da tela) grava todas de uma vez.
+   Cartões com alterações pendentes ficam com borda amarela. Ao trocar de mês ou fechar a página com algo não salvo, o sistema avisa.
+3. Em **Extras e descontos** (que considera só o que foi salvo), veja o fechamento geral, o passo a passo das compensações por especialidade e o repasse final. Dá para baixar a planilha (CSV) e fechar o mês (trava os números).
 4. Em **Metas e regras**, ajuste metas, valores unitários, repasse contratado e as regras de equivalência daquele mês. “Usar este quadro nos próximos meses” torna o quadro o padrão dos meses novos.
 
 ## Regra de cálculo

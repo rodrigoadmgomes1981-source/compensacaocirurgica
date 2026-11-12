@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useBanco, validarBackup, novoMes } from './storage.js'
-import { clone, rotulo, baixarArquivo } from './utils.js'
+import { clone, rotulo, baixarArquivo, mesmoRealizado } from './utils.js'
 import Lancamento from './components/Lancamento.jsx'
 import Fechamento from './components/Fechamento.jsx'
 import MetasRegras from './components/MetasRegras.jsx'
@@ -19,19 +19,50 @@ export default function App() {
   const [aba, setAba] = useState('lanc')
   const [aviso, setAviso] = useState('')
   const [confirmar, setConfirmar] = useState(null) // 'excluir' | 'limpar'
+  const [trocaPendente, setTrocaPendente] = useState(null) // mês escolhido com rascunho não salvo
+  // Rascunho do realizado do mês aberto: só vai para o banco ao clicar em Salvar.
+  const [rascunho, setRascunho] = useState({ mesId: null, dados: {} })
   const inputImport = useRef(null)
 
   const mes = mesId ? banco.meses[mesId] : null
   const travado = !mes || mes.status === 'fechado'
 
-  function escolherMes(id) {
-    if (!banco.meses[id]) {
-      setBanco((b) => ({ ...b, meses: { ...b.meses, [id]: novoMes(id, b.quadro) } }))
+  const sujas = useMemo(() => {
+    const s = new Set()
+    if (!mes || rascunho.mesId !== mes.id) return s
+    for (const e of mes.especialidades) {
+      if (!mesmoRealizado(rascunho.dados[e.id], mes.realizado?.[e.id])) s.add(e.id)
     }
+    return s
+  }, [mes, rascunho])
+  const temPendencia = sujas.size > 0
+
+  // Avisa o navegador ao fechar/recarregar a página com lançamentos não salvos.
+  useEffect(() => {
+    if (!temPendencia) return undefined
+    const h = (e) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', h)
+    return () => window.removeEventListener('beforeunload', h)
+  }, [temPendencia])
+
+  function abrirMes(id) {
+    const existente = banco.meses[id]
+    if (!existente) setBanco((b) => ({ ...b, meses: { ...b.meses, [id]: novoMes(id, b.quadro) } }))
+    setRascunho({ mesId: id, dados: clone(existente?.realizado || {}) })
     setMesId(id)
     setSeletorAberto(false)
     setConfirmar(null)
+    setTrocaPendente(null)
     setAba('lanc')
+  }
+
+  function escolherMes(id) {
+    if (temPendencia && id !== mesId) {
+      setSeletorAberto(false)
+      setTrocaPendente(id)
+      return
+    }
+    abrirMes(id)
   }
 
   function atualizarMes(fn) {
@@ -43,6 +74,35 @@ export default function App() {
     })
   }
 
+  function salvarEspecialidade(eId) {
+    const agora = new Date().toISOString()
+    const nome = mes.especialidades.find((e) => e.id === eId)?.nome
+    atualizarMes((m) => {
+      m.realizado = m.realizado || {}
+      m.realizado[eId] = clone(rascunho.dados[eId] || {})
+      m.salvoEm = { ...(m.salvoEm || {}), [eId]: agora }
+    })
+    setAviso(`${nome} salvo.`)
+  }
+
+  function salvarTudo() {
+    const agora = new Date().toISOString()
+    atualizarMes((m) => {
+      m.realizado = {}
+      m.salvoEm = { ...(m.salvoEm || {}) }
+      for (const e of m.especialidades) {
+        m.realizado[e.id] = clone(rascunho.dados[e.id] || {})
+        m.salvoEm[e.id] = agora
+      }
+      m.salvoGeralEm = agora
+    })
+    setAviso(`Todo o lançamento de ${rotulo(mesId)} foi salvo.`)
+  }
+
+  function trocarAba(k) {
+    setAba(k)
+  }
+
   function excluirMes() {
     setBanco((b) => {
       const n = clone(b)
@@ -50,6 +110,7 @@ export default function App() {
       return n
     })
     setMesId(null)
+    setRascunho({ mesId: null, dados: {} })
     setConfirmar(null)
     setSeletorAberto(true)
   }
@@ -74,6 +135,7 @@ export default function App() {
         if (!validarBackup(d)) throw new Error()
         setBanco(d)
         setMesId(null)
+        setRascunho({ mesId: null, dados: {} })
         setSeletorAberto(true)
         setAviso('Backup importado.')
       } catch {
@@ -111,7 +173,9 @@ export default function App() {
           {mes && (
             <nav className="tabs" role="tablist">
               {ABAS.map(([k, l]) => (
-                <button key={k} role="tab" aria-selected={aba === k} onClick={() => setAba(k)}>{l}</button>
+                <button key={k} role="tab" aria-selected={aba === k} onClick={() => trocarAba(k)}>
+                  {l}{k === 'lanc' && temPendencia && <span className="dot" aria-label="alterações não salvas" />}
+                </button>
               ))}
             </nav>
           )}
@@ -120,6 +184,20 @@ export default function App() {
 
       <main className="wrap">
         {erro && <div className="banner err">{erro}</div>}
+
+        {trocaPendente && (
+          <div className="banner warn">
+            <span>
+              Há lançamentos não salvos em {rotulo(mesId)}. O que fazer antes de abrir {rotulo(trocaPendente)}?
+            </span>
+            <span className="confirm">
+              <button className="primary" onClick={() => { salvarTudo(); abrirMes(trocaPendente) }}>Salvar e trocar</button>
+              <button className="danger" onClick={() => abrirMes(trocaPendente)}>Descartar e trocar</button>
+              <button onClick={() => setTrocaPendente(null)}>Cancelar</button>
+            </span>
+          </div>
+        )}
+
         {aviso && (
           <div className="banner">
             <span>{aviso}</span>
@@ -142,9 +220,25 @@ export default function App() {
           </div>
         )}
 
+        {mes && aba !== 'lanc' && temPendencia && (
+          <div className="banner warn">
+            <span>
+              {sujas.size === 1 ? 'Uma especialidade tem' : `${sujas.size} especialidades têm`} lançamentos não salvos.
+              Os cálculos desta aba consideram só o que já foi salvo.
+            </span>
+            <span className="confirm">
+              <button className="primary" onClick={salvarTudo}>Salvar todo o lançamento</button>
+              <button onClick={() => setAba('lanc')}>Voltar ao lançamento</button>
+            </span>
+          </div>
+        )}
+
         {mes && aba === 'lanc' && (
-          <Lancamento mes={mes} travado={travado} atualizarMes={atualizarMes} irPara={setAba}
-            confirmarLimpar={confirmar === 'limpar'} setConfirmar={setConfirmar} />
+          <Lancamento
+            mes={mes} travado={travado} rascunho={rascunho} setRascunho={setRascunho} sujas={sujas}
+            onSalvarEsp={salvarEspecialidade} onSalvarTudo={salvarTudo}
+            irPara={setAba} confirmarLimpar={confirmar === 'limpar'} setConfirmar={setConfirmar}
+          />
         )}
         {mes && aba === 'fech' && (
           <Fechamento mes={mes} onAlternarStatus={() => atualizarMes((m) => { m.status = m.status === 'fechado' ? 'aberto' : 'fechado' })} />

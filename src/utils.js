@@ -11,7 +11,19 @@ export const rotulo = (id) => {
   return `${MESES[Number(m) - 1] || m}/${y}`
 }
 
-export const novoId = () => Math.random().toString(36).slice(2, 8)
+export const hora = (iso) =>
+  iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
+
+// Compara o realizado de uma especialidade ignorando campos vazios.
+export function mesmoRealizado(a = {}, b = {}) {
+  const limpa = (o) => Object.entries(o || {}).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  const ea = limpa(a)
+  const eb = limpa(b)
+  if (ea.length !== eb.length) return false
+  return ea.every(([k, v]) => Number(b[k]) === Number(v))
+}
+
+export const novoId =() => Math.random().toString(36).slice(2, 8)
 export const clone = (o) => JSON.parse(JSON.stringify(o))
 
 export function proximoMes(id) {

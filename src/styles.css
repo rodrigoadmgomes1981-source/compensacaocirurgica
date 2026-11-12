@@ -147,3 +147,16 @@ input.cell.tiny{width:56px}
 .chips-row{display:flex;flex-wrap:wrap;gap:6px}
 @media (max-width:560px){.meses-grid{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:380px){.meses-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* salvar por especialidade e geral */
+.card.suja{border-color:var(--warn)}
+.card-save{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line)}
+.save-state{font-size:.84rem;font-weight:600}
+.save-state.ok{color:var(--muted)}
+.save-state.pend{color:var(--warn)}
+.save-bar{position:sticky;bottom:0;z-index:4;margin-top:4px;padding-bottom:env(safe-area-inset-bottom,0px)}
+.save-bar-in{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+.save-bar.pend .save-bar-in{border-color:var(--warn);background:var(--warn-soft)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-left:6px;vertical-align:middle}
+.card-f{border-radius:0}
